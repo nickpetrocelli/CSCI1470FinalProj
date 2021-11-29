@@ -15,6 +15,8 @@ class ConvToLinear(tf.keras.Model):
         # architecture is currently based on my architecture for hw2
         # seemed to work pretty well then
 
+        self.optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
+
         self.conv_1 = tf.keras.Sequential()
 
         self.conv_1.add(tf.keras.layers.Conv2D(filters=20, kernel_size=5, strides=2, padding='SAME'))
@@ -86,8 +88,6 @@ class ConvToLinear(tf.keras.Model):
 
 
 def train(model, train_images, train_labels, batch_size = 100):
-    # define an optimizer
-    optimizer = tf.keras.optimizers.Adam(learning_rate = 1e-3)
 
 
     # shuffle the input as I have in the homework
@@ -107,7 +107,7 @@ def train(model, train_images, train_labels, batch_size = 100):
 
         # from lab
         gradients = tape.gradient(loss, model.trainable_variables)
-        optimizer.apply_gradients(zip(gradients, model.trainable_variables))
+        model.optimizer.apply_gradients(zip(gradients, model.trainable_variables))
         
         batch_index = batch_index + batch_size
 
