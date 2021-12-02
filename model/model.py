@@ -2,6 +2,7 @@ import numpy as np
 import tensorflow as tf
 from get_data import get_examples
 import math
+import imageio as iio
 
 
 class ConvToLinear(tf.keras.Model):
@@ -45,7 +46,7 @@ class ConvToLinear(tf.keras.Model):
 
         #final linear layer with input image_dim x image_dim
         # no activation, these are pure logits
-        self.logit_layer = tf.keras.layers.Dense(image_dim * image_dim)
+        self.logit_layer = tf.keras.layers.Dense(image_dim * image_dim, activation='sigmoid')
 
     def call(self, inputs_batch):
         """
@@ -68,10 +69,10 @@ class ConvToLinear(tf.keras.Model):
 
         return outputs
 
-    def loss(self, logit_batch, labels_batch):
+    def loss(self, sig_prob_batch, labels_batch):
         """
         output_batch: BATCH_SIZE x 10,000
-        labels_batch: BATCH_SIZE x 100 x 100
+        sig_prob_batch: BATCH_SIZE x 100 x 100
         """
         labels = tf.convert_to_tensor(labels_batch, dtype=tf.float64)
         labels_flat = tf.reshape(labels, (labels.shape[0], self.image_dim * self.image_dim))
@@ -80,10 +81,10 @@ class ConvToLinear(tf.keras.Model):
         # partially inspired by hw5, this is somewhat of a "reconstruction loss" of the output river network
         # though this is a classification problem, not a generation one.
         loss_calc = tf.keras.losses.BinaryCrossentropy(
-            from_logits=True, 
+            from_logits=False, 
             reduction=tf.keras.losses.Reduction.SUM,
         )
-        loss = loss_calc(labels_flat, logit_batch)
+        loss = loss_calc(labels_flat, sig_prob_batch)
         return loss
 
 
@@ -101,8 +102,8 @@ def train(model, train_images, train_labels, batch_size = 100):
         label_batch = shuffled_labels[batch_index:batch_index+batch_size]
 
         with tf.GradientTape() as tape:
-            logits = model.call(input_batch)
-            loss = model.loss(logits, label_batch)
+            sig_probs = model.call(input_batch)
+            loss = model.loss(sig_probs, label_batch)
             print(f"{batch_index} / {len(train_images)} LOSS : {loss}")
 
         # from lab
@@ -127,13 +128,43 @@ def test(model, test_images, test_labels, batch_size = 100):
         input_batch = test_images[batch_index:batch_index+batch_size]
         label_batch = test_labels[batch_index:batch_index+batch_size]
 
-        logits = model.call(input_batch)
-        loss = model.loss(logits, label_batch)
+        sig_probs = model.call(input_batch)
+        loss = model.loss(sig_probs, label_batch)
+        print(f"{batch_index} / {len(test_labels)} LOSS : {loss}")
         losses.append(loss)
-        print(loss)
         batch_index = batch_index + batch_size
 
     return tf.reduce_mean(tf.convert_to_tensor(losses))
+
+
+def output_to_imgarray(model, input_image):
+    """
+    Visualizes the output for a given image
+    :param input_image: 1x100x100x1 image input
+    :return 100x100x4 numpy array representing .png (can be output using imageio)
+    """
+    # get sigmoid probabilities
+    sig_probs = model.call(input_image)
+    
+    output_flat = []
+    for i in sig_probs[0]:
+        if i > tf.convert_to_tensor(0.5):
+            output_flat.append([0, 0, 0, 255])
+        else:
+            output_flat.append([0, 0, 0, 0])
+
+    output = np.array(output_flat, dtype=np.uint8)
+    output = np.reshape(output, (model.image_dim, model.image_dim, 4))
+
+    return output
+
+
+def visualize_imgarray(img_array, filename='output.png', directory='../outputs'):
+    """
+    Writes the given image to the given filename in the given directory
+    :param img_array: 100x100x4 numpy array representing .png (output of output_to_imgarray)
+    """
+    iio.imwrite(f'{directory}/{filename}', img_array)
 
 
 def main():
@@ -179,8 +210,8 @@ def main():
     # TODO save weights?
 
     # TODO visualize results?
-
-
+    # should be IMG-1001
+    visualize_imgarray(output_to_imgarray(model, [images[5]]), filename='image-1001-output.png')
 
 
 
