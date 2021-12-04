@@ -89,22 +89,19 @@ class ConvToLinear(tf.keras.Model):
 
 
 def train(model, train_images, train_labels, batch_size = 100):
-
-
-    # shuffle the input as I have in the homework
-    shuffled_indices = tf.random.shuffle([i for i in range(len(train_images))])
-    shuffled_inputs = tf.gather(train_images, shuffled_indices)
-    shuffled_labels = tf.gather(train_labels, shuffled_indices)
+    # define accuracy metric
+    
 
     batch_index = 0
-    while batch_index < len(shuffled_inputs):
-        input_batch = shuffled_inputs[batch_index:batch_index+batch_size]
-        label_batch = shuffled_labels[batch_index:batch_index+batch_size]
+    while batch_index < len(train_images):
+        input_batch = train_images[batch_index:batch_index+batch_size]
+        label_batch = train_labels[batch_index:batch_index+batch_size]
 
         with tf.GradientTape() as tape:
             sig_probs = model.call(input_batch)
             loss = model.loss(sig_probs, label_batch)
-            print(f"{batch_index} / {len(train_images)} LOSS : {loss}")
+
+            print(f"{batch_index} / {len(train_images)} | LOSS : {loss}")
 
         # from lab
         gradients = tape.gradient(loss, model.trainable_variables)
@@ -112,12 +109,13 @@ def train(model, train_images, train_labels, batch_size = 100):
         
         batch_index = batch_index + batch_size
 
-
-
-    return
+    return 
 
 def test(model, test_images, test_labels, batch_size = 100):
     # very similar to homework procedure
+    accuracy_accumulator = tf.keras.metrics.Accuracy()
+    # TODO this should work but it doesn't for some reason
+    #accuracy_accumulator.reset_state()
     
     # TODO need a better accuracy metric
     # currently just return average test loss
@@ -129,12 +127,25 @@ def test(model, test_images, test_labels, batch_size = 100):
         label_batch = test_labels[batch_index:batch_index+batch_size]
 
         sig_probs = model.call(input_batch)
+
+        # have to do some weird transformations to leverage keras' accuracy func
+        # see https://www.tensorflow.org/api_docs/python/tf/keras/metrics/Accuracy
+        # essentially taking highest probability class from outputs then comparing to labels
+        transformed_probs = tf.reshape(sig_probs, [-1])
+        # TODO there is probably a much better way to do this with tf.map_fn but I couldn't figure one out
+        transformed_probs = tf.convert_to_tensor([1 if x>0.5 else 0 for x in transformed_probs])
+        transformed_probs = tf.reshape(transformed_probs, [-1, 1])
+        transformed_labels = tf.reshape(label_batch, [-1, 1])
+        accuracy_accumulator.update_state(y_true=transformed_labels, y_pred=transformed_probs)
+
+
         loss = model.loss(sig_probs, label_batch)
-        print(f"{batch_index} / {len(test_labels)} LOSS : {loss}")
+        print(f"{batch_index} / {len(test_labels)} | LOSS : {loss}")
         losses.append(loss)
         batch_index = batch_index + batch_size
 
-    return tf.reduce_mean(tf.convert_to_tensor(losses))
+    # return accuracy
+    return accuracy_accumulator.result()
 
 
 def output_to_imgarray(model, input_image):
@@ -171,6 +182,9 @@ def main():
     img_dirs = ['../data/imgs/network_1_50m/stream_network_1_buff_50m/']
     label_dirs = ['../data/imgs/network_1_50m/river_label_1/']
 
+    # TODO DEBUG - for consistent results when testing/debugging, should remove for primetime?
+    tf.random.set_seed(12345)
+
     assert len(img_dirs) == len(label_dirs)
 
     images = []
@@ -183,6 +197,14 @@ def main():
         images.extend(imgs)
         labels.extend(lbs)
 
+
+    # shuffle the input as I have in the homework
+    # doing this now to improve performance by preventing issues due to
+    # training set and testing set coming from disjoint regions of the original image
+    shuffled_indices = tf.random.shuffle([i for i in range(len(images))])
+    shuffled_inputs = tf.gather(images, shuffled_indices)
+    shuffled_labels = tf.gather(labels, shuffled_indices)
+
     print("Finished preprocessing. Starting training.")
 
     # initialize model
@@ -193,19 +215,23 @@ def main():
     train_ratio = 0.7
     train_idx = math.floor(len(images) * train_ratio)
 
-    train_x = images[:train_idx]
-    train_y = labels[:train_idx]
+    train_x = shuffled_inputs[:train_idx]
+    train_y = shuffled_labels[:train_idx]
 
-    test_x = images[train_idx:]
-    test_y = images[train_idx:]
+    test_x = shuffled_inputs[train_idx:]
+    test_y = shuffled_labels[train_idx:]
 
     # train
     train(model, train_x, train_y)
 
     # test/return results
     print("Testing...")
-    avg_test_loss = test(model, test_x, test_y)
-    print(f"FINAL AVERAGE TEST LOSS: {avg_test_loss}")
+    test_acc = test(model, test_x, test_y)
+    print(f"FINAL TEST ACCURACY: {test_acc}")
+
+    print("DEBUG: testing on train inputs")
+    debug_test_acc = test(model, train_x, train_y)
+    print(f"DEBUG TEST ACCURACY: {debug_test_acc}")
 
     # TODO save weights?
 
