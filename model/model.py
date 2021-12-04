@@ -88,11 +88,11 @@ class ConvToLinear(tf.keras.Model):
         return loss
 
 
-def train(model, train_images, train_labels, batch_size = 100):
-    # define accuracy metric
-    
+def train(model, train_images, train_labels, epoch, batch_size = 100):
+    # epoch is just for printing    
 
     batch_index = 0
+    batch_num = 0
     while batch_index < len(train_images):
         input_batch = train_images[batch_index:batch_index+batch_size]
         label_batch = train_labels[batch_index:batch_index+batch_size]
@@ -101,17 +101,18 @@ def train(model, train_images, train_labels, batch_size = 100):
             sig_probs = model.call(input_batch)
             loss = model.loss(sig_probs, label_batch)
 
-            print(f"{batch_index} / {len(train_images)} | LOSS : {loss}")
+            print(f"TRAIN|{epoch}|{batch_num}|{loss}|")
 
         # from lab
         gradients = tape.gradient(loss, model.trainable_variables)
         model.optimizer.apply_gradients(zip(gradients, model.trainable_variables))
         
         batch_index = batch_index + batch_size
+        batch_num = batch_num + 1
 
     return 
 
-def test(model, test_images, test_labels, batch_size = 100):
+def test(model, test_images, test_labels, epoch, batch_size = 100):
     # very similar to homework procedure
     accuracy_accumulator = tf.keras.metrics.Accuracy()
     # TODO this should work but it doesn't for some reason
@@ -122,6 +123,7 @@ def test(model, test_images, test_labels, batch_size = 100):
 
     losses = []
     batch_index = 0
+    batch_num = 0
     while batch_index < len(test_images):
         input_batch = test_images[batch_index:batch_index+batch_size]
         label_batch = test_labels[batch_index:batch_index+batch_size]
@@ -140,9 +142,11 @@ def test(model, test_images, test_labels, batch_size = 100):
         accuracy_accumulator.update_state(y_true=transformed_labels, y_pred=transformed_probs)
 
 
-        print(f"{batch_index} / {len(test_labels)} | LOSS : {loss}")
+        print(f"TEST|{epoch}|{batch_num}|{loss}|{accuracy_accumulator.result()}")
+
         losses.append(loss)
         batch_index = batch_index + batch_size
+        batch_num = batch_num + 1
 
     # return accuracy
     return accuracy_accumulator.result()
@@ -191,7 +195,7 @@ def main():
     images = []
     labels = []
 
-    print("Starting data preprocessing.")
+    #print("Starting data preprocessing.")
 
     for i in range(len(img_dirs)):
         imgs, lbs = get_examples(img_dirs[i], label_dirs[i])
@@ -206,7 +210,7 @@ def main():
     shuffled_inputs = tf.gather(images, shuffled_indices)
     shuffled_labels = tf.gather(labels, shuffled_indices)
 
-    print("Finished preprocessing. Starting training.")
+    #print("Finished preprocessing. Starting training.")
 
     # initialize model
     model = ConvToLinear(images[0].shape[0])
@@ -241,19 +245,19 @@ def main():
     #     print(f"epoch {i}")
     #     train(model, train_x, train_y, batch_size = 1)
 
-
+    print("run_type|epoch_num|batch_num|loss|avg_accuracy")
     for i in range(NUM_EPOCHS):
-        print(f"EPOCH {i}")
-        train(model, train_x, train_y)
+        #print(f"EPOCH {i}")
+        train(model, train_x, train_y, 0)
 
     # test/return results
-    print("Testing...")
-    test_acc = test(model, test_x, test_y)
-    print(f"FINAL TEST ACCURACY: {test_acc}")
+    #print("Testing...")
+    test_acc = test(model, test_x, test_y, 0)
+    #print(f"FINAL TEST ACCURACY: {test_acc}")
 
-    print("DEBUG: testing on train inputs")
-    debug_test_acc = test(model, train_x, train_y)
-    print(f"DEBUG TEST ACCURACY: {debug_test_acc}")
+    #print("DEBUG: testing on train inputs")
+    debug_test_acc = test(model, train_x, train_y, 0)
+    #print(f"DEBUG TEST ACCURACY: {debug_test_acc}")
 
     # TODO save weights?
 
