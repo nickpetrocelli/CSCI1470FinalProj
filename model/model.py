@@ -127,6 +127,7 @@ def test(model, test_images, test_labels, batch_size = 100):
         label_batch = test_labels[batch_index:batch_index+batch_size]
 
         sig_probs = model.call(input_batch)
+        loss = model.loss(sig_probs, label_batch)
 
         # have to do some weird transformations to leverage keras' accuracy func
         # see https://www.tensorflow.org/api_docs/python/tf/keras/metrics/Accuracy
@@ -139,7 +140,6 @@ def test(model, test_images, test_labels, batch_size = 100):
         accuracy_accumulator.update_state(y_true=transformed_labels, y_pred=transformed_probs)
 
 
-        loss = model.loss(sig_probs, label_batch)
         print(f"{batch_index} / {len(test_labels)} | LOSS : {loss}")
         losses.append(loss)
         batch_index = batch_index + batch_size
@@ -179,6 +179,7 @@ def visualize_imgarray(img_array, filename='output.png', directory='../outputs')
 
 
 def main():
+    NUM_EPOCHS = 1
     img_dirs = ['../data/imgs/network_1_50m/stream_network_1_buff_50m/']
     label_dirs = ['../data/imgs/network_1_50m/river_label_1/']
 
@@ -221,8 +222,29 @@ def main():
     test_x = shuffled_inputs[train_idx:]
     test_y = shuffled_labels[train_idx:]
 
-    # train
-    train(model, train_x, train_y)
+    # TA notes:
+    # train only on one image for many epochs, then test on the same one image
+    # should tell if weights are getting updated
+
+    # visualize pair of inputs?
+
+
+
+    # #TODO DEBUG
+    # train_x = [images[5]]
+    # train_y = [labels[5]]
+
+    # test_x = train_x
+    # test_y = train_y
+    # # train
+    # for i in range(250):
+    #     print(f"epoch {i}")
+    #     train(model, train_x, train_y, batch_size = 1)
+
+
+    for i in range(NUM_EPOCHS):
+        print(f"EPOCH {i}")
+        train(model, train_x, train_y)
 
     # test/return results
     print("Testing...")
