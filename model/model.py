@@ -23,7 +23,7 @@ class ConvToLinear(tf.keras.Model):
 
         self.conv_1 = tf.keras.Sequential()
 
-        self.conv_1.add(tf.keras.layers.Conv2D(filters=20, kernel_size=5, strides=2, padding='SAME'))
+        self.conv_1.add(tf.keras.layers.Conv2D(filters=30, kernel_size=5, strides=2, padding='VALID'))
         self.conv_1.add(tf.keras.layers.BatchNormalization())
         self.conv_1.add(tf.keras.layers.ReLU())
         self.conv_1.add(tf.keras.layers.MaxPool2D(padding='SAME'))
@@ -31,21 +31,30 @@ class ConvToLinear(tf.keras.Model):
 
         self.conv_2 = tf.keras.Sequential()
 
-        self.conv_2.add(tf.keras.layers.Conv2D(filters=40, kernel_size=5, strides=1, padding='SAME'))
+        self.conv_2.add(tf.keras.layers.Conv2D(filters=60, kernel_size=2, strides=1, padding='VALID'))
         self.conv_2.add(tf.keras.layers.BatchNormalization())
         self.conv_2.add(tf.keras.layers.ReLU())
         self.conv_2.add(tf.keras.layers.MaxPool2D(padding='SAME'))
 
         self.conv_3 = tf.keras.Sequential()
 
-        self.conv_3.add(tf.keras.layers.Conv2D(filters=50, kernel_size=2, strides=1, padding='SAME'))
+        self.conv_3.add(tf.keras.layers.Conv2D(filters=80, kernel_size=2, strides=1, padding='SAME'))
         self.conv_3.add(tf.keras.layers.BatchNormalization())
         self.conv_3.add(tf.keras.layers.ReLU())
         self.conv_3.add(tf.keras.layers.MaxPool2D(padding='SAME'))
 
+        self.conv_4 = tf.keras.Sequential()
 
-        #linears 1
-        self.lin_1 = tf.keras.layers.Dense((image_dim * image_dim) / 2, activation='relu')
+        self.conv_4.add(tf.keras.layers.Conv2D(filters=80, kernel_size=2, strides=1, padding='SAME'))
+        self.conv_4.add(tf.keras.layers.BatchNormalization())
+        self.conv_4.add(tf.keras.layers.ReLU())
+        self.conv_4.add(tf.keras.layers.MaxPool2D(padding='SAME'))
+
+
+        #linears 
+        self.lin_1 = tf.keras.layers.Dense((image_dim * image_dim) / 4, activation='relu')
+
+        self.lin_2 = tf.keras.layers.Dense((image_dim * image_dim) / 2, activation='relu')
 
         #final linear layer with input image_dim x image_dim
         # no activation, these are pure logits
@@ -62,13 +71,17 @@ class ConvToLinear(tf.keras.Model):
 
         conv_output_3 = self.conv_3(conv_output_2)
 
+        conv_output_4 = self.conv_4(conv_output_3)
+
         # reshape for linear
         # taken from hw2
-        lin_in = tf.reshape(conv_output_3, [conv_output_3.shape[0], -1])
+        lin_in = tf.reshape(conv_output_4, [conv_output_4.shape[0], -1])
 
         lin_1_out = self.lin_1(lin_in)
 
-        outputs = self.logit_layer(lin_1_out)
+        lin_2_out = self.lin_2(lin_1_out)
+
+        outputs = self.logit_layer(lin_2_out)
 
         return outputs
 
@@ -258,14 +271,14 @@ def main():
     #print(f"FINAL TEST ACCURACY: {test_acc}")
 
     # print("DEBUG: testing on train inputs")
-    debug_test_acc = test(model, train_x, train_y, 0)
+    # debug_test_acc = test(model, train_x, train_y, 0)
     # print(f"DEBUG TEST ACCURACY: {debug_test_acc}")
 
     # TODO save weights?
 
     # TODO visualize results?
     # should be IMG-1001
-    visualize_imgarray(output_to_imgarray(model, [images[5]]), filename='image-1001-debug-output.png', directory='../outputs')
+    visualize_imgarray(output_to_imgarray(model, [images[5]]), filename='image-1001-test-output.png', directory='../outputs')
 
 
 
