@@ -4,6 +4,9 @@ from get_data import get_examples
 import math
 import imageio as iio
 
+# for debugging
+#np.set_printoptions(threshold=np.inf)
+
 
 class ConvToLinear(tf.keras.Model):
     def __init__(self, image_dim):
@@ -161,6 +164,7 @@ def output_to_imgarray(model, input_image):
     """
     # get sigmoid probabilities
     sig_probs = model.call(input_image)
+    print(sig_probs)
     
     output_flat = []
     for i in sig_probs[0]:
@@ -185,8 +189,8 @@ def visualize_imgarray(img_array, filename='output.png', directory='outputs'):
 
 def main():
     NUM_EPOCHS = 1
-    img_dirs = ['data/imgs/network_1_50m/stream_network_1_buff_50m/', 'data/imgs/network_1_50m/stream_network_2_buff_50m/']
-    label_dirs = ['data/imgs/network_1_50m/river_label_1/', 'data/imgs/network_1_50m/river_label_2/']
+    img_dirs = ['../data/network_1_50m/stream_network_1_buff_50m/', '../data/network_2_50m/stream_network_2_buff_50m/']
+    label_dirs = ['../data/network_1_50m/river_label_1/', '../data/network_2_50m/river_label_2/']
 
     # TODO DEBUG - for consistent results when testing/debugging, should remove for primetime?
     tf.random.set_seed(12345)
@@ -196,7 +200,6 @@ def main():
     images = []
     labels = []
 
-    print("Starting data preprocessing.")
 
     for i in range(len(img_dirs)):
         imgs, lbs = get_examples(img_dirs[i], label_dirs[i])
@@ -210,7 +213,6 @@ def main():
     shuffled_inputs = tf.gather(images, shuffled_indices)
     shuffled_labels = tf.gather(labels, shuffled_indices)
 
-    print("Finished preprocessing. Starting training.")
 
     # initialize model
     model = ConvToLinear(images[0].shape[0])
@@ -233,9 +235,11 @@ def main():
     # visualize pair of inputs?
 
 
-    # #TODO DEBUG
+    #TODO DEBUG
     # train_x = [images[5]]
     # train_y = [labels[5]]
+
+    # print(train_y)
 
     # test_x = train_x
     # test_y = train_y
@@ -250,19 +254,18 @@ def main():
         train(model, train_x, train_y, 0)
 
     # test/return results
-    print("Testing...")
     test_acc = test(model, test_x, test_y, 0)
-    print(f"FINAL TEST ACCURACY: {test_acc}")
+    #print(f"FINAL TEST ACCURACY: {test_acc}")
 
     # print("DEBUG: testing on train inputs")
-    # debug_test_acc = test(model, train_x, train_y, 0)
+    debug_test_acc = test(model, train_x, train_y, 0)
     # print(f"DEBUG TEST ACCURACY: {debug_test_acc}")
 
     # TODO save weights?
 
     # TODO visualize results?
     # should be IMG-1001
-    visualize_imgarray(output_to_imgarray(model, [images[5]]), filename='image-1001-output.png')
+    visualize_imgarray(output_to_imgarray(model, [images[5]]), filename='image-1001-debug-output.png', directory='../outputs')
 
 
 
