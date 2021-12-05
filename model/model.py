@@ -136,7 +136,8 @@ def test(model, test_images, test_labels, epoch, batch_size = 100):
         # essentially taking highest probability class from outputs then comparing to labels
         transformed_probs = tf.reshape(sig_probs, [-1])
         # TODO there is probably a much better way to do this with tf.map_fn but I couldn't figure one out
-        transformed_probs = tf.convert_to_tensor([1 if x>0.5 else 0 for x in transformed_probs])
+        # transformed_probs = tf.convert_to_tensor([1 if x>0.5 else 0 for x in transformed_probs])
+        transformed_probs = np.where(transformed_probs > 0.5, 1, 0)
         transformed_probs = tf.reshape(transformed_probs, [-1, 1])
         transformed_labels = tf.reshape(label_batch, [-1, 1])
         accuracy_accumulator.update_state(y_true=transformed_labels, y_pred=transformed_probs)
@@ -174,7 +175,7 @@ def output_to_imgarray(model, input_image):
     return output
 
 
-def visualize_imgarray(img_array, filename='output.png', directory='../outputs'):
+def visualize_imgarray(img_array, filename='output.png', directory='outputs'):
     """
     Writes the given image to the given filename in the given directory
     :param img_array: 100x100x4 numpy array representing .png (output of output_to_imgarray)
@@ -184,8 +185,8 @@ def visualize_imgarray(img_array, filename='output.png', directory='../outputs')
 
 def main():
     NUM_EPOCHS = 1
-    img_dirs = ['../data/imgs/network_1_50m/stream_network_1_buff_50m/']
-    label_dirs = ['../data/imgs/network_1_50m/river_label_1/']
+    img_dirs = ['data/imgs/network_1_50m/stream_network_1_buff_50m/']
+    label_dirs = ['data/imgs/network_1_50m/river_label_1/']
 
     # TODO DEBUG - for consistent results when testing/debugging, should remove for primetime?
     tf.random.set_seed(12345)
@@ -195,7 +196,7 @@ def main():
     images = []
     labels = []
 
-    #print("Starting data preprocessing.")
+    print("Starting data preprocessing.")
 
     for i in range(len(img_dirs)):
         imgs, lbs = get_examples(img_dirs[i], label_dirs[i])
@@ -210,7 +211,7 @@ def main():
     shuffled_inputs = tf.gather(images, shuffled_indices)
     shuffled_labels = tf.gather(labels, shuffled_indices)
 
-    #print("Finished preprocessing. Starting training.")
+    print("Finished preprocessing. Starting training.")
 
     # initialize model
     model = ConvToLinear(images[0].shape[0])
@@ -251,13 +252,13 @@ def main():
         train(model, train_x, train_y, 0)
 
     # test/return results
-    #print("Testing...")
+    print("Testing...")
     test_acc = test(model, test_x, test_y, 0)
-    #print(f"FINAL TEST ACCURACY: {test_acc}")
+    print(f"FINAL TEST ACCURACY: {test_acc}")
 
-    #print("DEBUG: testing on train inputs")
-    debug_test_acc = test(model, train_x, train_y, 0)
-    #print(f"DEBUG TEST ACCURACY: {debug_test_acc}")
+    # print("DEBUG: testing on train inputs")
+    # debug_test_acc = test(model, train_x, train_y, 0)
+    # print(f"DEBUG TEST ACCURACY: {debug_test_acc}")
 
     # TODO save weights?
 
