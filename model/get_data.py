@@ -36,31 +36,14 @@ def get_examples(images_path, labels_path):
 
     # print(labels_lst[2].shape)
 
-    # print("BEFORE")
-    # for r in labels_lst[10]:
-    #     print(r)
-
     # relabel the labels using fourth channel
-    # hacky, couldn't figure a better way to do this in numpy
-    # even though one def exists
     encoded_labels=[np.zeros((100, 100)) for l in labels_lst]
 
     for i in range(len(labels_lst)):
         l = labels_lst[i]
-        e = encoded_labels[i]
-        for x in range(l.shape[0]):
-            for y in range(l.shape[1]):
-                if l[x][y][3] == 0:
-                    e[x][y] = 0
-                else:
-                    e[x][y] = 1
+        l_4 = l[:, :, 3]
+        encoded_labels[i] = np.where(l_4 == 0, 0.0, 1.0)
 
-    # print("AFTER")
-    # print(encoded_labels[10].shape)
-    # for r in encoded_labels[10]:
-    #     print(r)         
-    
-    
     return images_lst, encoded_labels
 
 

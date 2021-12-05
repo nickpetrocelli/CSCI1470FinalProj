@@ -185,8 +185,8 @@ def visualize_imgarray(img_array, filename='output.png', directory='outputs'):
 
 def main():
     NUM_EPOCHS = 1
-    img_dirs = ['data/imgs/network_1_50m/stream_network_1_buff_50m/']
-    label_dirs = ['data/imgs/network_1_50m/river_label_1/']
+    img_dirs = ['data/imgs/network_1_50m/stream_network_1_buff_50m/', 'data/imgs/network_1_50m/stream_network_2_buff_50m/']
+    label_dirs = ['data/imgs/network_1_50m/river_label_1/', 'data/imgs/network_1_50m/river_label_2/']
 
     # TODO DEBUG - for consistent results when testing/debugging, should remove for primetime?
     tf.random.set_seed(12345)
@@ -202,7 +202,6 @@ def main():
         imgs, lbs = get_examples(img_dirs[i], label_dirs[i])
         images.extend(imgs)
         labels.extend(lbs)
-
 
     # shuffle the input as I have in the homework
     # doing this now to improve performance by preventing issues due to
@@ -232,7 +231,6 @@ def main():
     # should tell if weights are getting updated
 
     # visualize pair of inputs?
-
 
 
     # #TODO DEBUG
