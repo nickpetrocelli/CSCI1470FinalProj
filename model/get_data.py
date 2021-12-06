@@ -25,7 +25,7 @@ def get_examples(images_path, labels_path):
             images_lst.append(img_with_chan)
 
     # print(images_lst[0].shape)
-    #print(images_lst[0])
+    # print(images_lst[0])
 
 
     labels_lst = []
@@ -34,7 +34,6 @@ def get_examples(images_path, labels_path):
         if filename.endswith(".png"):
             labels_lst.append(iio.imread(labels_path + filename))
 
-    # print(labels_lst[2].shape)
 
     # relabel the labels using fourth channel
     encoded_labels=[np.zeros((100, 100)) for l in labels_lst]

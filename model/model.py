@@ -3,6 +3,9 @@ import tensorflow as tf
 from get_data import get_examples
 import math
 import imageio as iio
+import keras.backend as K
+from typing import Tuple
+
 
 # for debugging
 #np.set_printoptions(threshold=np.inf)
@@ -87,6 +90,7 @@ class ConvToLinear(tf.keras.Model):
 
     def loss(self, sig_prob_batch, labels_batch):
         """
+        resource for weighing custom loss function: https://gist.github.com/osulki01/218c552ebd6ce389e6055831eb3de9b2#file-custom_tensorflow_loss_function-ipynb
         output_batch: BATCH_SIZE x 10,000
         sig_prob_batch: BATCH_SIZE x 100 x 100
         """
@@ -96,12 +100,35 @@ class ConvToLinear(tf.keras.Model):
         #idea: sum of crossentropy loss
         # partially inspired by hw5, this is somewhat of a "reconstruction loss" of the output river network
         # though this is a classification problem, not a generation one.
+
+
         loss_calc = tf.keras.losses.BinaryCrossentropy(
             from_logits=False, 
             reduction=tf.keras.losses.Reduction.SUM,
         )
-        loss = loss_calc(labels_flat, sig_prob_batch)
-        return loss
+        standard_cross_entropy = loss_calc(labels_flat, sig_prob_batch)
+
+        labels_batch = tf.cast(tf.reshape(labels_batch, [tf.shape(labels_batch)[0], 10000]), tf.float32)
+        sig_prob_batch = tf.cast(sig_prob_batch, tf.float32)
+
+        difference = tf.subtract(sig_prob_batch, labels_batch)
+        # false pos:    diff = (0.5 : 1) - 0 = (0.5 : 1)
+        # false neg:    diff = (0 : 0.5) - 1 = (-0.5 : -1)
+        # true pos/neg: diff = 1 - 1 or 0 - 0 = 0
+
+        # weigh false neg 1 and everything else 0.5
+        weights = np.where(difference < -0.5, 1, 0.5)
+
+        total_weight = tf.cast(tf.reduce_sum(weights), tf.float64)
+        total_items = tf.cast((labels.shape[0] * self.image_dim * self.image_dim), tf.float64)
+        normalized_weight = total_weight / total_items
+
+        print("sum of weights: "+str(total_weight))
+        print("denominator: "+ str(total_items))
+        print("normalized weight: "+str(normalized_weight))
+
+        standard_cross_entropy = tf.cast(standard_cross_entropy, tf.float64)
+        return tf.math.multiply(standard_cross_entropy, normalized_weight)
 
 
 def train(model, train_images, train_labels, epoch, batch_size = 100):
@@ -177,7 +204,7 @@ def output_to_imgarray(model, input_image):
     """
     # get sigmoid probabilities
     sig_probs = model.call(input_image)
-    print(sig_probs)
+    # print(sig_probs)
     
     output_flat = []
     for i in sig_probs[0]:
@@ -202,8 +229,8 @@ def visualize_imgarray(img_array, filename='output.png', directory='outputs'):
 
 def main():
     NUM_EPOCHS = 1
-    img_dirs = ['../data/network_1_50m/stream_network_1_buff_50m/', '../data/network_2_50m/stream_network_2_buff_50m/']
-    label_dirs = ['../data/network_1_50m/river_label_1/', '../data/network_2_50m/river_label_2/']
+    img_dirs = ['data/network_1_50m/stream_network_1_buff_50m/', 'data/network_2_50m/stream_network_2_buff_50m/']
+    label_dirs = ['data/network_1_50m/river_label_1/', 'data/network_2_50m/river_label_2/']
 
     # TODO DEBUG - for consistent results when testing/debugging, should remove for primetime?
     tf.random.set_seed(12345)
@@ -278,7 +305,7 @@ def main():
 
     # TODO visualize results?
     # should be IMG-1001
-    visualize_imgarray(output_to_imgarray(model, [images[5]]), filename='image-1001-test-output.png', directory='../outputs')
+    visualize_imgarray(output_to_imgarray(model, [images[5]]), filename='image-1001-test-1-output.png', directory='outputs')
 
 
 
