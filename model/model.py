@@ -17,11 +17,11 @@ class ConvToLinear(tf.keras.Model):
         # to compress common operations
 
 
-        self.optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
+        self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.0005)
 
         self.conv_1 = tf.keras.Sequential()
 
-        self.conv_1.add(tf.keras.layers.Conv2D(filters=30, kernel_size=5, strides=2, padding='VALID'))
+        self.conv_1.add(tf.keras.layers.Conv2D(filters=40, kernel_size=5, strides=2, padding='VALID'))
         self.conv_1.add(tf.keras.layers.BatchNormalization())
         self.conv_1.add(tf.keras.layers.ReLU())
         self.conv_1.add(tf.keras.layers.MaxPool2D(padding='SAME'))
@@ -29,21 +29,21 @@ class ConvToLinear(tf.keras.Model):
 
         self.conv_2 = tf.keras.Sequential()
 
-        self.conv_2.add(tf.keras.layers.Conv2D(filters=60, kernel_size=2, strides=1, padding='VALID'))
+        self.conv_2.add(tf.keras.layers.Conv2D(filters=70, kernel_size=2, strides=1, padding='VALID'))
         self.conv_2.add(tf.keras.layers.BatchNormalization())
         self.conv_2.add(tf.keras.layers.ReLU())
         self.conv_2.add(tf.keras.layers.MaxPool2D(padding='SAME'))
 
         self.conv_3 = tf.keras.Sequential()
 
-        self.conv_3.add(tf.keras.layers.Conv2D(filters=80, kernel_size=2, strides=1, padding='SAME'))
+        self.conv_3.add(tf.keras.layers.Conv2D(filters=90, kernel_size=2, strides=1, padding='SAME'))
         self.conv_3.add(tf.keras.layers.BatchNormalization())
         self.conv_3.add(tf.keras.layers.ReLU())
         self.conv_3.add(tf.keras.layers.MaxPool2D(padding='SAME'))
 
         self.conv_4 = tf.keras.Sequential()
 
-        self.conv_4.add(tf.keras.layers.Conv2D(filters=80, kernel_size=2, strides=1, padding='SAME'))
+        self.conv_4.add(tf.keras.layers.Conv2D(filters=90, kernel_size=2, strides=1, padding='SAME'))
         self.conv_4.add(tf.keras.layers.BatchNormalization())
         self.conv_4.add(tf.keras.layers.ReLU())
         self.conv_4.add(tf.keras.layers.MaxPool2D(padding='SAME'))
@@ -263,7 +263,7 @@ def main():
         #print(f"EPOCH {i}")
         train(model, train_x, train_y, i)
         test_acc = test(model, test_x, test_y, i)
-        visualize_imgarray(output_to_imgarray(model, [images[5]]), filename=f'image-1001-test-output_3_epoch_{i}.png', directory='../outputs')
+        visualize_imgarray(output_to_imgarray(model, [images[5]]), filename=f'image-1001-test-output_4_epoch_{i}.png', directory='../outputs')
 
 
     # test/return results
