@@ -1,0 +1,48 @@
+class ConvToLinear(tf.keras.Model):
+    def __init__(self, image_dim):
+        super(ConvToLinear, self).__init__()
+        self.image_dim = image_dim # should be 100
+
+        # idea: create set of sequentials
+        # to compress common operations
+
+        self.optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
+
+        self.conv_1 = tf.keras.Sequential()
+
+        self.conv_1.add(tf.keras.layers.Conv2D(filters=30, kernel_size=5, strides=2, padding='SAME'))
+        self.conv_1.add(tf.keras.layers.BatchNormalization())
+        self.conv_1.add(tf.keras.layers.ReLU())
+        self.conv_1.add(tf.keras.layers.MaxPool2D(padding='SAME'))
+         
+
+        self.conv_2 = tf.keras.Sequential()
+
+        self.conv_2.add(tf.keras.layers.Conv2D(filters=60, kernel_size=2, strides=1, padding='SAME'))
+        self.conv_2.add(tf.keras.layers.BatchNormalization())
+        self.conv_2.add(tf.keras.layers.ReLU())
+        self.conv_2.add(tf.keras.layers.MaxPool2D(padding='SAME'))
+
+        self.conv_3 = tf.keras.Sequential()
+
+        self.conv_3.add(tf.keras.layers.Conv2D(filters=80, kernel_size=2, strides=1, padding='SAME'))
+        self.conv_3.add(tf.keras.layers.BatchNormalization())
+        self.conv_3.add(tf.keras.layers.ReLU())
+        self.conv_3.add(tf.keras.layers.MaxPool2D(padding='SAME'))
+
+        self.conv_4 = tf.keras.Sequential()
+
+        self.conv_4.add(tf.keras.layers.Conv2D(filters=80, kernel_size=2, strides=1, padding='SAME'))
+        self.conv_4.add(tf.keras.layers.BatchNormalization())
+        self.conv_4.add(tf.keras.layers.ReLU())
+        self.conv_4.add(tf.keras.layers.MaxPool2D(padding='SAME'))
+
+
+        #linears 
+        self.lin_1 = tf.keras.layers.Dense((image_dim * image_dim) / 4, activation='relu')
+
+        self.lin_2 = tf.keras.layers.Dense((image_dim * image_dim) / 2, activation='relu')
+
+        #final linear layer with input image_dim x image_dim
+        # no activation, these are pure logits
+        self.logit_layer = tf.keras.layers.Dense(image_dim * image_dim, activation='sigmoid')

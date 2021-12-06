@@ -201,12 +201,12 @@ def visualize_imgarray(img_array, filename='output.png', directory='outputs'):
 
 
 def main():
-    NUM_EPOCHS = 1
+    NUM_EPOCHS = 5
     img_dirs = ['../data/network_1_50m/stream_network_1_buff_50m/', '../data/network_2_50m/stream_network_2_buff_50m/']
     label_dirs = ['../data/network_1_50m/river_label_1/', '../data/network_2_50m/river_label_2/']
 
     # TODO DEBUG - for consistent results when testing/debugging, should remove for primetime?
-    tf.random.set_seed(12345)
+    tf.random.set_seed(54321)
 
     assert len(img_dirs) == len(label_dirs)
 
@@ -264,10 +264,13 @@ def main():
     print("run_type|epoch_num|batch_num|loss|avg_accuracy")
     for i in range(NUM_EPOCHS):
         #print(f"EPOCH {i}")
-        train(model, train_x, train_y, 0)
+        train(model, train_x, train_y, i)
+        test_acc = test(model, test_x, test_y, i)
+        visualize_imgarray(output_to_imgarray(model, [images[5]]), filename=f'image-1001-test-output_2_epoch_{i}.png', directory='../outputs')
+
 
     # test/return results
-    test_acc = test(model, test_x, test_y, 0)
+    
     #print(f"FINAL TEST ACCURACY: {test_acc}")
 
     # print("DEBUG: testing on train inputs")
@@ -278,8 +281,6 @@ def main():
 
     # TODO visualize results?
     # should be IMG-1001
-    visualize_imgarray(output_to_imgarray(model, [images[5]]), filename='image-1001-test-output.png', directory='../outputs')
-
 
 
 if __name__ == '__main__':
