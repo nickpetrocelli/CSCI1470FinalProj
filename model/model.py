@@ -16,8 +16,6 @@ class ConvToLinear(tf.keras.Model):
         # idea: create set of sequentials
         # to compress common operations
 
-        # architecture is currently based on my architecture for hw2
-        # seemed to work pretty well then
 
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
 
@@ -57,7 +55,6 @@ class ConvToLinear(tf.keras.Model):
         self.lin_2 = tf.keras.layers.Dense((image_dim * image_dim) / 2, activation='relu')
 
         #final linear layer with input image_dim x image_dim
-        # no activation, these are pure logits
         self.logit_layer = tf.keras.layers.Dense(image_dim * image_dim, activation='sigmoid')
 
     def call(self, inputs_batch):
@@ -266,7 +263,7 @@ def main():
         #print(f"EPOCH {i}")
         train(model, train_x, train_y, i)
         test_acc = test(model, test_x, test_y, i)
-        visualize_imgarray(output_to_imgarray(model, [images[5]]), filename=f'image-1001-test-output_2_epoch_{i}.png', directory='../outputs')
+        visualize_imgarray(output_to_imgarray(model, [images[5]]), filename=f'image-1001-test-output_3_epoch_{i}.png', directory='../outputs')
 
 
     # test/return results

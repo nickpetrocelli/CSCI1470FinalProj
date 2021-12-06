@@ -6,6 +6,7 @@ class ConvToLinear(tf.keras.Model):
         # idea: create set of sequentials
         # to compress common operations
 
+
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
 
         self.conv_1 = tf.keras.Sequential()
@@ -13,7 +14,6 @@ class ConvToLinear(tf.keras.Model):
         self.conv_1.add(tf.keras.layers.Conv2D(filters=30, kernel_size=5, strides=2, padding='VALID'))
         self.conv_1.add(tf.keras.layers.BatchNormalization())
         self.conv_1.add(tf.keras.layers.ReLU())
-        self.conv_1.add(tf.keras.layers.MaxPool2D(padding='SAME'))
          
 
         self.conv_2 = tf.keras.Sequential()
@@ -21,21 +21,18 @@ class ConvToLinear(tf.keras.Model):
         self.conv_2.add(tf.keras.layers.Conv2D(filters=60, kernel_size=2, strides=1, padding='VALID'))
         self.conv_2.add(tf.keras.layers.BatchNormalization())
         self.conv_2.add(tf.keras.layers.ReLU())
-        self.conv_2.add(tf.keras.layers.MaxPool2D(padding='SAME'))
 
         self.conv_3 = tf.keras.Sequential()
 
         self.conv_3.add(tf.keras.layers.Conv2D(filters=80, kernel_size=2, strides=1, padding='SAME'))
         self.conv_3.add(tf.keras.layers.BatchNormalization())
         self.conv_3.add(tf.keras.layers.ReLU())
-        self.conv_3.add(tf.keras.layers.MaxPool2D(padding='SAME'))
 
         self.conv_4 = tf.keras.Sequential()
 
         self.conv_4.add(tf.keras.layers.Conv2D(filters=80, kernel_size=2, strides=1, padding='SAME'))
         self.conv_4.add(tf.keras.layers.BatchNormalization())
         self.conv_4.add(tf.keras.layers.ReLU())
-        self.conv_4.add(tf.keras.layers.MaxPool2D(padding='SAME'))
 
 
         #linears 

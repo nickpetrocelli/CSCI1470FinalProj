@@ -44,5 +44,4 @@ class ConvToLinear(tf.keras.Model):
         self.lin_2 = tf.keras.layers.Dense((image_dim * image_dim) / 2, activation='relu')
 
         #final linear layer with input image_dim x image_dim
-        # no activation, these are pure logits
         self.logit_layer = tf.keras.layers.Dense(image_dim * image_dim, activation='sigmoid')
