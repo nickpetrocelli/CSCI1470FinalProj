@@ -19,14 +19,11 @@ class ConvToLinear(tf.keras.Model):
         # idea: create set of sequentials
         # to compress common operations
 
-        # architecture is currently based on my architecture for hw2
-        # seemed to work pretty well then
-
-        self.optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
+        self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.0005)
 
         self.conv_1 = tf.keras.Sequential()
 
-        self.conv_1.add(tf.keras.layers.Conv2D(filters=30, kernel_size=5, strides=2, padding='VALID'))
+        self.conv_1.add(tf.keras.layers.Conv2D(filters=40, kernel_size=5, strides=2, padding='VALID'))
         self.conv_1.add(tf.keras.layers.BatchNormalization())
         self.conv_1.add(tf.keras.layers.ReLU())
         self.conv_1.add(tf.keras.layers.MaxPool2D(padding='SAME'))
@@ -34,21 +31,21 @@ class ConvToLinear(tf.keras.Model):
 
         self.conv_2 = tf.keras.Sequential()
 
-        self.conv_2.add(tf.keras.layers.Conv2D(filters=60, kernel_size=2, strides=1, padding='VALID'))
+        self.conv_2.add(tf.keras.layers.Conv2D(filters=70, kernel_size=2, strides=1, padding='VALID'))
         self.conv_2.add(tf.keras.layers.BatchNormalization())
         self.conv_2.add(tf.keras.layers.ReLU())
         self.conv_2.add(tf.keras.layers.MaxPool2D(padding='SAME'))
 
         self.conv_3 = tf.keras.Sequential()
 
-        self.conv_3.add(tf.keras.layers.Conv2D(filters=80, kernel_size=2, strides=1, padding='SAME'))
+        self.conv_3.add(tf.keras.layers.Conv2D(filters=90, kernel_size=2, strides=1, padding='SAME'))
         self.conv_3.add(tf.keras.layers.BatchNormalization())
         self.conv_3.add(tf.keras.layers.ReLU())
         self.conv_3.add(tf.keras.layers.MaxPool2D(padding='SAME'))
 
         self.conv_4 = tf.keras.Sequential()
 
-        self.conv_4.add(tf.keras.layers.Conv2D(filters=80, kernel_size=2, strides=1, padding='SAME'))
+        self.conv_4.add(tf.keras.layers.Conv2D(filters=90, kernel_size=2, strides=1, padding='SAME'))
         self.conv_4.add(tf.keras.layers.BatchNormalization())
         self.conv_4.add(tf.keras.layers.ReLU())
         self.conv_4.add(tf.keras.layers.MaxPool2D(padding='SAME'))
@@ -60,7 +57,6 @@ class ConvToLinear(tf.keras.Model):
         self.lin_2 = tf.keras.layers.Dense((image_dim * image_dim) / 2, activation='relu')
 
         #final linear layer with input image_dim x image_dim
-        # no activation, these are pure logits
         self.logit_layer = tf.keras.layers.Dense(image_dim * image_dim, activation='sigmoid')
 
     def call(self, inputs_batch):
@@ -228,12 +224,12 @@ def visualize_imgarray(img_array, filename='output.png', directory='outputs'):
 
 
 def main():
-    NUM_EPOCHS = 1
-    img_dirs = ['data/network_1_50m/stream_network_1_buff_50m/', 'data/network_2_50m/stream_network_2_buff_50m/']
-    label_dirs = ['data/network_1_50m/river_label_1/', 'data/network_2_50m/river_label_2/']
+    NUM_EPOCHS = 5
+    img_dirs = ['../data/network_1_50m/stream_network_1_buff_50m/', '../data/network_2_50m/stream_network_2_buff_50m/']
+    label_dirs = ['../data/network_1_50m/river_label_1/', '../data/network_2_50m/river_label_2/']
 
     # TODO DEBUG - for consistent results when testing/debugging, should remove for primetime?
-    tf.random.set_seed(12345)
+    tf.random.set_seed(54321)
 
     assert len(img_dirs) == len(label_dirs)
 
@@ -291,10 +287,13 @@ def main():
     print("run_type|epoch_num|batch_num|loss|avg_accuracy")
     for i in range(NUM_EPOCHS):
         #print(f"EPOCH {i}")
-        train(model, train_x, train_y, 0)
+        train(model, train_x, train_y, i)
+        test_acc = test(model, test_x, test_y, i)
+        visualize_imgarray(output_to_imgarray(model, [images[5]]), filename=f'image-1001-test-output_4_epoch_{i}.png', directory='../outputs')
+
 
     # test/return results
-    test_acc = test(model, test_x, test_y, 0)
+    
     #print(f"FINAL TEST ACCURACY: {test_acc}")
 
     # print("DEBUG: testing on train inputs")
@@ -305,8 +304,6 @@ def main():
 
     # TODO visualize results?
     # should be IMG-1001
-    visualize_imgarray(output_to_imgarray(model, [images[5]]), filename='image-1001-test-1-output.png', directory='outputs')
-
 
 
 if __name__ == '__main__':

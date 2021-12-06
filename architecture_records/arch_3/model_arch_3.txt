@@ -10,7 +10,7 @@ class ConvToLinear(tf.keras.Model):
 
         self.conv_1 = tf.keras.Sequential()
 
-        self.conv_1.add(tf.keras.layers.Conv2D(filters=30, kernel_size=5, strides=2, padding='VALID'))
+        self.conv_1.add(tf.keras.layers.Conv2D(filters=30, kernel_size=5, strides=2, padding='SAME'))
         self.conv_1.add(tf.keras.layers.BatchNormalization())
         self.conv_1.add(tf.keras.layers.ReLU())
         self.conv_1.add(tf.keras.layers.MaxPool2D(padding='SAME'))
@@ -18,7 +18,7 @@ class ConvToLinear(tf.keras.Model):
 
         self.conv_2 = tf.keras.Sequential()
 
-        self.conv_2.add(tf.keras.layers.Conv2D(filters=60, kernel_size=2, strides=1, padding='VALID'))
+        self.conv_2.add(tf.keras.layers.Conv2D(filters=60, kernel_size=2, strides=1, padding='SAME'))
         self.conv_2.add(tf.keras.layers.BatchNormalization())
         self.conv_2.add(tf.keras.layers.ReLU())
         self.conv_2.add(tf.keras.layers.MaxPool2D(padding='SAME'))
