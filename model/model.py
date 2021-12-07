@@ -139,7 +139,8 @@ def train(model, train_images, train_labels, epoch, batch_size = 100):
 
         with tf.GradientTape() as tape:
             sig_probs = model.call(input_batch)
-            loss = model.loss(sig_probs, label_batch)
+            #loss = model.loss(sig_probs, label_batch)
+            loss = model.old_loss(sig_probs, label_batch)
 
             print(f"TRAIN|{epoch}|{batch_num}|{loss}|")
 
@@ -169,7 +170,9 @@ def test(model, test_images, test_labels, epoch, batch_size = 100):
         label_batch = test_labels[batch_index:batch_index+batch_size]
 
         sig_probs = model.call(input_batch)
-        loss = model.loss(sig_probs, label_batch)
+        #loss = model.loss(sig_probs, label_batch)
+        loss = model.old_loss(sig_probs, label_batch)
+
 
         # have to do some weird transformations to leverage keras' accuracy func
         # see https://www.tensorflow.org/api_docs/python/tf/keras/metrics/Accuracy
@@ -229,10 +232,15 @@ def main():
     img_dirs = ['../data/network_1_50m/stream_network_1_buff_50m/', '../data/network_2_50m/stream_network_2_buff_50m/']
     label_dirs = ['../data/network_1_50m/river_label_1/', '../data/network_2_50m/river_label_2/']
 
+    eval_img_dir = '../eval_sample/image/'
+    eval_label_dir = '../eval_sample/label/'
+
     # TODO DEBUG - for consistent results when testing/debugging, should remove for primetime?
     tf.random.set_seed(54321)
 
     assert len(img_dirs) == len(label_dirs)
+
+    eval_img, eval_label = get_examples(eval_img_dir, eval_label_dir)
 
     images = []
     labels = []
@@ -290,7 +298,7 @@ def main():
         #print(f"EPOCH {i}")
         train(model, train_x, train_y, i)
         test_acc = test(model, test_x, test_y, i)
-        visualize_imgarray(output_to_imgarray(model, [images[5]]), filename=f'image-1001-test-output_5_epoch_{i}_withsum.png', directory='../outputs')
+        visualize_imgarray(output_to_imgarray(model, eval_img), filename=f'image-1001-model-output_epoch_{i}_withweight.png', directory='../outputs')
 
 
     # test/return results
