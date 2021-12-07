@@ -103,9 +103,29 @@ class ConvToLinear(tf.keras.Model):
         total_weight = tf.cast(tf.reduce_sum(weights), tf.float32)
 
         loss_matrix = K.binary_crossentropy(labels_batch, sig_prob_batch)
-        weighted_loss = (tf.math.multiply(loss_matrix, weights)) / total_weight
+        weighted_loss = (tf.math.multiply(loss_matrix, weights)) # / total_weight
 
-        return tf.reduce_mean(weighted_loss)
+        return tf.reduce_sum(weighted_loss)
+
+    def old_loss(self, sig_prob_batch, labels_batch):
+        """
+        The old loss before we tried weighting it.
+        Use this if you want more sane output. Replace loss in train() and test() with this.
+        output_batch: BATCH_SIZE x 10,000
+        sig_prob_batch: BATCH_SIZE x 100 x 100
+        """
+        labels = tf.convert_to_tensor(labels_batch, dtype=tf.float64)
+        labels_flat = tf.reshape(labels, (labels.shape[0], self.image_dim * self.image_dim))
+
+        #idea: sum of crossentropy loss
+        # partially inspired by hw5, this is somewhat of a "reconstruction loss" of the output river network
+        # though this is a classification problem, not a generation one.
+        loss_calc = tf.keras.losses.BinaryCrossentropy(
+            from_logits=False, 
+            reduction=tf.keras.losses.Reduction.SUM,
+        )
+        loss = loss_calc(labels_flat, sig_prob_batch)
+        return loss
 
 
 def train(model, train_images, train_labels, epoch, batch_size = 100):
@@ -205,7 +225,7 @@ def visualize_imgarray(img_array, filename='output.png', directory='outputs'):
 
 
 def main():
-    NUM_EPOCHS = 1
+    NUM_EPOCHS = 5
     img_dirs = ['../data/network_1_50m/stream_network_1_buff_50m/', '../data/network_2_50m/stream_network_2_buff_50m/']
     label_dirs = ['../data/network_1_50m/river_label_1/', '../data/network_2_50m/river_label_2/']
 
@@ -270,7 +290,7 @@ def main():
         #print(f"EPOCH {i}")
         train(model, train_x, train_y, i)
         test_acc = test(model, test_x, test_y, i)
-        visualize_imgarray(output_to_imgarray(model, [images[5]]), filename=f'image-1001-test-output_4_epoch_{i}_new.png', directory='../outputs')
+        visualize_imgarray(output_to_imgarray(model, [images[5]]), filename=f'image-1001-test-output_5_epoch_{i}_withsum.png', directory='../outputs')
 
 
     # test/return results
