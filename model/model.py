@@ -4,7 +4,6 @@ from get_data import get_examples
 import math
 import imageio as iio
 import keras.backend as K
-from typing import Tuple
 
 
 # for debugging
@@ -90,21 +89,8 @@ class ConvToLinear(tf.keras.Model):
         output_batch: BATCH_SIZE x 10,000
         sig_prob_batch: BATCH_SIZE x 100 x 100
         """
-        labels = tf.convert_to_tensor(labels_batch, dtype=tf.float64)
-        labels_flat = tf.reshape(labels, (labels.shape[0], self.image_dim * self.image_dim))
 
-        #idea: sum of crossentropy loss
-        # partially inspired by hw5, this is somewhat of a "reconstruction loss" of the output river network
-        # though this is a classification problem, not a generation one.
-
-
-        loss_calc = tf.keras.losses.BinaryCrossentropy(
-            from_logits=False, 
-            reduction=tf.keras.losses.Reduction.SUM,
-        )
-        standard_cross_entropy = loss_calc(labels_flat, sig_prob_batch)
-
-        labels_batch = tf.cast(tf.reshape(labels_batch, [tf.shape(labels_batch)[0], 10000]), tf.float32)
+        labels_batch = tf.cast(tf.reshape(labels_batch, [tf.shape(labels_batch)[0], self.image_dim * self.image_dim]), tf.float32)
         sig_prob_batch = tf.cast(sig_prob_batch, tf.float32)
 
         difference = tf.subtract(sig_prob_batch, labels_batch)
@@ -112,19 +98,14 @@ class ConvToLinear(tf.keras.Model):
         # false neg:    diff = (0 : 0.5) - 1 = (-0.5 : -1)
         # true pos/neg: diff = 1 - 1 or 0 - 0 = 0
 
-        # weigh false neg 1 and everything else 0.5
-        weights = np.where(difference < -0.5, 1, 0.5)
+        # weigh false negative 1 and everything else 0.9
+        weights = np.where(difference < -0.5, 1, 0.9)
+        total_weight = tf.cast(tf.reduce_sum(weights), tf.float32)
 
-        total_weight = tf.cast(tf.reduce_sum(weights), tf.float64)
-        total_items = tf.cast((labels.shape[0] * self.image_dim * self.image_dim), tf.float64)
-        normalized_weight = total_weight / total_items
+        loss_matrix = K.binary_crossentropy(labels_batch, sig_prob_batch)
+        weighted_loss = (tf.math.multiply(loss_matrix, weights)) / total_weight
 
-        print("sum of weights: "+str(total_weight))
-        print("denominator: "+ str(total_items))
-        print("normalized weight: "+str(normalized_weight))
-
-        standard_cross_entropy = tf.cast(standard_cross_entropy, tf.float64)
-        return tf.math.multiply(standard_cross_entropy, normalized_weight)
+        return tf.reduce_mean(weighted_loss)
 
 
 def train(model, train_images, train_labels, epoch, batch_size = 100):
@@ -224,7 +205,7 @@ def visualize_imgarray(img_array, filename='output.png', directory='outputs'):
 
 
 def main():
-    NUM_EPOCHS = 5
+    NUM_EPOCHS = 1
     img_dirs = ['../data/network_1_50m/stream_network_1_buff_50m/', '../data/network_2_50m/stream_network_2_buff_50m/']
     label_dirs = ['../data/network_1_50m/river_label_1/', '../data/network_2_50m/river_label_2/']
 
@@ -289,7 +270,7 @@ def main():
         #print(f"EPOCH {i}")
         train(model, train_x, train_y, i)
         test_acc = test(model, test_x, test_y, i)
-        visualize_imgarray(output_to_imgarray(model, [images[5]]), filename=f'image-1001-test-output_4_epoch_{i}.png', directory='../outputs')
+        visualize_imgarray(output_to_imgarray(model, [images[5]]), filename=f'image-1001-test-output_4_epoch_{i}_new.png', directory='../outputs')
 
 
     # test/return results
